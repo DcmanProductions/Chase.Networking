@@ -1,4 +1,5 @@
-﻿// LFInteractive LLC. 2021-2024﻿ LFInteractive LLC. 2021-2024﻿ LFInteractive LLC. - All Rights Reserved
+﻿// LFInteractive LLC. 2021-2024﻿ LFInteractive LLC. 2021-2024﻿ LFInteractive LLC. 2021-2024﻿
+// LFInteractive LLC. 2021-2024﻿ LFInteractive LLC. 2021-2024﻿ LFInteractive LLC. - All Rights Reserved
 using Chase.Networking.Event;
 using Newtonsoft.Json.Linq;
 
@@ -47,9 +48,64 @@ public class NetworkClient : HttpClient
         timer.Stop();
     }
 
+    /// <summary>
+    /// Sends an HTTP GET request to the specified URI and parses the response content as JSON
+    /// object (JObject).
+    /// </summary>
+    /// <param name="uri">The URI to send the GET request to.</param>
+    /// <returns>
+    /// A task representing the asynchronous operation that yields a JObject representing the parsed
+    /// JSON response, or null if the response is null.
+    /// </returns>
     public Task<JObject?> GetAsJson(string uri) => GetAsJson(new HttpRequestMessage() { Method = HttpMethod.Get, RequestUri = new(uri) });
 
+    /// <summary>
+    /// Sends an HTTP request and parses the response content as JSON object (JObject).
+    /// </summary>
+    /// <param name="requestMessage">The HttpRequestMessage to send.</param>
+    /// <returns>
+    /// A task representing the asynchronous operation that yields a JObject representing the parsed
+    /// JSON response, or null if the response is null.
+    /// </returns>
     public async Task<JObject?> GetAsJson(HttpRequestMessage requestMessage)
     {
+        using HttpResponseMessage response = await SendAsync(requestMessage);
+
+        if (response != null)
+        {
+            return JObject.Parse(await response.Content.ReadAsStringAsync());
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Sends an HTTP GET request to the specified URI and parses the response content as JSON array (JArray).
+    /// </summary>
+    /// <param name="uri">The URI to send the GET request to.</param>
+    /// <returns>
+    /// A task representing the asynchronous operation that yields a JArray representing the parsed
+    /// JSON response, or null if the response is null.
+    /// </returns>
+    public Task<JArray?> GetAsJsonArray(string uri) => GetAsJsonArray(new HttpRequestMessage() { Method = HttpMethod.Get, RequestUri = new(uri) });
+
+    /// <summary>
+    /// Sends an HTTP request and parses the response content as JSON array (JArray).
+    /// </summary>
+    /// <param name="requestMessage">The HttpRequestMessage to send.</param>
+    /// <returns>
+    /// A task representing the asynchronous operation that yields a JArray representing the parsed
+    /// JSON response, or null if the response is null.
+    /// </returns>
+    public async Task<JArray?> GetAsJsonArray(HttpRequestMessage requestMessage)
+    {
+        using HttpResponseMessage response = await SendAsync(requestMessage);
+
+        if (response != null)
+        {
+            return JArray.Parse(await response.Content.ReadAsStringAsync());
+        }
+
+        return null;
     }
 }
