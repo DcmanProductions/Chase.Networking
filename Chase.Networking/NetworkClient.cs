@@ -1,12 +1,28 @@
-﻿// LFInteractive LLC. 2021-2024﻿ LFInteractive LLC. 2021-2024﻿ LFInteractive LLC. 2021-2024﻿
-// LFInteractive LLC. 2021-2024﻿ LFInteractive LLC. 2021-2024﻿ LFInteractive LLC. - All Rights Reserved
+﻿/*
+Chase.Networking LFInteractive LLC. 2021-2024﻿
+a simple networking library
+https://github.com/dcmanProductions/Chase.Networking
+Licensed under GNU General Public License v3.0
+https://www.gnu.org/licenses/gpl-3.0.en.html
+*/
+
 using Chase.Networking.Event;
 using Newtonsoft.Json.Linq;
 
 namespace Chase.Networking;
 
+/// <summary>
+/// A modified <seealso cref="HttpClient">HttpClient</seealso> that adds additional features.
+/// </summary>
 public class NetworkClient : HttpClient
 {
+    /// <summary>
+    /// Downloads a file using an address and output file
+    /// </summary>
+    /// <param name="address"></param>
+    /// <param name="file"></param>
+    /// <param name="progress"></param>
+    /// <returns></returns>
     public Task DownloadFileAsync(string address, string file, DownloadProgressEvent? progress = null) => DownloadFileAsync(new Uri(address), file, progress);
 
     /// <summary>
