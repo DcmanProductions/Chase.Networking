@@ -19,22 +19,26 @@ public class NetworkClient : HttpClient
     /// <summary>
     /// Downloads a file using an address and output file
     /// </summary>
-    /// <param name="address"></param>
-    /// <param name="file"></param>
+    /// <param name="address">the direct download link</param>
+    /// <param name="path">the directory or absolute file path</param>
     /// <param name="progress"></param>
     /// <returns></returns>
-    public Task DownloadFileAsync(string address, string file, DownloadProgressEvent? progress = null) => DownloadFileAsync(new Uri(address), file, progress);
+    public Task DownloadFileAsync(string address, string path, DownloadProgressEvent? progress = null) => DownloadFileAsync(new Uri(address), path, progress);
 
     /// <summary>
     /// Downloads a file using an address and output file
     /// </summary>
-    /// <param name="address"></param>
-    /// <param name="file"></param>
+    /// <param name="address">the direct download uri</param>
+    /// <param name="path">the directory or absolute file path</param>
     /// <param name="progress"></param>
     /// <returns></returns>
-    public async Task DownloadFileAsync(Uri address, string file, DownloadProgressEvent? progress = null)
+    public async Task<string> DownloadFileAsync(Uri address, string path, DownloadProgressEvent? progress = null)
     {
+        bool guessFileName = new FileInfo(path).Attributes.HasFlag(FileAttributes.Directory);
         using HttpResponseMessage response = await GetAsync(address, HttpCompletionOption.ResponseHeadersRead);
+        string? ContentDisposition = response.Content.Headers.ContentDisposition?.FileName;
+        string file = guessFileName ? Path.Combine(path, string.IsNullOrWhiteSpace(ContentDisposition) ? Path.GetRandomFileName() : ContentDisposition) : path;
+
         using HttpContent content = response.Content;
         long contentLength = content.Headers.ContentLength.GetValueOrDefault();
 
@@ -62,6 +66,7 @@ public class NetworkClient : HttpClient
             }
         }
         timer.Stop();
+        return file;
     }
 
     /// <summary>
