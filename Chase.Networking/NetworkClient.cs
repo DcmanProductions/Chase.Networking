@@ -23,7 +23,7 @@ public class NetworkClient : HttpClient
     /// <param name="path">the directory or absolute file path</param>
     /// <param name="progress"></param>
     /// <returns></returns>
-    public Task DownloadFileAsync(string address, string path, DownloadProgressEvent? progress = null) => DownloadFileAsync(new Uri(address), path, progress);
+    public Task<string> DownloadFileAsync(string address, string path, DownloadProgressEvent? progress = null) => DownloadFileAsync(new Uri(address), path, progress);
 
     /// <summary>
     /// Downloads a file using an address and output file
@@ -34,7 +34,7 @@ public class NetworkClient : HttpClient
     /// <returns></returns>
     public async Task<string> DownloadFileAsync(Uri address, string path, DownloadProgressEvent? progress = null)
     {
-        bool guessFileName = new FileInfo(path).Attributes.HasFlag(FileAttributes.Directory);
+        bool guessFileName = new FileInfo(path).Attributes.HasFlag(FileAttributes.Directory) && Directory.Exists(path);
         using HttpResponseMessage response = await GetAsync(address, HttpCompletionOption.ResponseHeadersRead);
         string? ContentDisposition = response.Content.Headers.ContentDisposition?.FileName;
         string file = guessFileName ? Path.Combine(path, string.IsNullOrWhiteSpace(ContentDisposition) ? Path.GetRandomFileName() : ContentDisposition) : path;
@@ -62,7 +62,7 @@ public class NetworkClient : HttpClient
             {
                 await fs.WriteAsync(buffer.AsMemory(0, bytesRead));
                 totalBytesRead += bytesRead;
-                progress?.Invoke(this, new DownloadProgressEventArgs((double)totalBytesRead / contentLength, totalBytesRead, contentLength, bytesPerSecond));
+                progress?.Invoke(this, new DownloadProgressEventArgs(Path.GetFileName(file), (double)totalBytesRead / contentLength, totalBytesRead, contentLength, bytesPerSecond));
             }
         }
         timer.Stop();
