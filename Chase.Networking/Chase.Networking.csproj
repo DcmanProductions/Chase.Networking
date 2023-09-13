@@ -5,18 +5,19 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Title>Chase Networking</Title>
-    <Version>0.0.3</Version>
+    <Version>0.0.5</Version>
     <Authors>Drew Chase</Authors>
     <Company>LFInteractive</Company>
     <Description>A simple networking library
 </Description>
     <PackageProjectUrl></PackageProjectUrl>
     <RepositoryUrl>https://github.com/dcmanProductions/Chase.Networking</RepositoryUrl>
-    <PackageTags>networking;utility</PackageTags>
+    <PackageTags>networking;utility;chase</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes>Added FileName property to DownloadProgressEventArgs</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
