@@ -39,6 +39,11 @@ public class NetworkClient : HttpClient
         string? ContentDisposition = response.Content.Headers.ContentDisposition?.FileName;
         string file = guessFileName ? Path.Combine(path, string.IsNullOrWhiteSpace(ContentDisposition) ? Path.GetRandomFileName() : ContentDisposition) : path;
 
+        foreach (char c in Path.GetInvalidFileNameChars())
+        {
+            file = file.Replace(c.ToString(), "");
+        }
+
         using HttpContent content = response.Content;
         long contentLength = content.Headers.ContentLength.GetValueOrDefault();
 

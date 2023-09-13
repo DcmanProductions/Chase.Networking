@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Title>Chase Networking</Title>
-    <Version>0.0.5</Version>
+    <Version>0.0.6</Version>
     <Authors>Drew Chase</Authors>
     <Company>LFInteractive</Company>
     <Description>A simple networking library
@@ -17,7 +17,7 @@
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageReleaseNotes>Added FileName property to DownloadProgressEventArgs</PackageReleaseNotes>
+    <PackageReleaseNotes>Fixed issue where content disposition could have invalid filename characters</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
