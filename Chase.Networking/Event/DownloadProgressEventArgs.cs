@@ -24,6 +24,11 @@ public delegate void DownloadProgressEvent(NetworkClient sender, DownloadProgres
 public class DownloadProgressEventArgs
 {
     /// <summary>
+    /// The file name of the download
+    /// </summary>
+    public string FileName { get; private set; }
+
+    /// <summary>
     /// The number of bytes downloaded
     /// </summary>
     public long BytesDownloaded { get; private set; }
@@ -48,8 +53,9 @@ public class DownloadProgressEventArgs
     /// </summary>
     public long TotalBytesToReceive { get; private set; }
 
-    internal DownloadProgressEventArgs(double percentage, long bytesDownloaded, long totalBytesToReceive, double bytesPerSecond)
+    internal DownloadProgressEventArgs(string filename, double percentage, long bytesDownloaded, long totalBytesToReceive, double bytesPerSecond)
     {
+        FileName = filename;
         Percentage = percentage;
         BytesDownloaded = bytesDownloaded;
         TotalBytesToReceive = totalBytesToReceive;
