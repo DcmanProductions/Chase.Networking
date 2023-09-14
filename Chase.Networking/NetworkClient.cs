@@ -1,13 +1,13 @@
 ﻿/*
-Chase.Networking LFInteractive LLC. 2021-2024﻿
-a simple networking library
-https://github.com/dcmanProductions/Chase.Networking
-Licensed under GNU General Public License v3.0
-https://www.gnu.org/licenses/gpl-3.0.en.html
+    FFNodes - LFInteractive LLC. 2021-2024
+    FFNodes is a client/server solution for batch processing ffmpeg operations from multiple systems across the internet.
+    Licensed under GPL-3.0
+    https://www.gnu.org/licenses/gpl-3.0.en.html#license-text
 */
 
 using Chase.Networking.Event;
 using Newtonsoft.Json.Linq;
+using System.Net.Http.Headers;
 
 namespace Chase.Networking;
 
@@ -37,12 +37,7 @@ public class NetworkClient : HttpClient
         bool guessFileName = new FileInfo(path).Attributes.HasFlag(FileAttributes.Directory) && Directory.Exists(path);
         using HttpResponseMessage response = await GetAsync(address, HttpCompletionOption.ResponseHeadersRead);
         string? ContentDisposition = response.Content.Headers.ContentDisposition?.FileName;
-        string file = guessFileName ? Path.Combine(path, string.IsNullOrWhiteSpace(ContentDisposition) ? Path.GetRandomFileName() : ContentDisposition) : path;
-
-        foreach (char c in Path.GetInvalidFileNameChars())
-        {
-            file = file.Replace(c.ToString(), "");
-        }
+        string file = guessFileName ? Path.Combine(path, GetValidFileName(string.IsNullOrWhiteSpace(ContentDisposition) ? Path.GetRandomFileName() : ContentDisposition)) : path;
 
         using HttpContent content = response.Content;
         long contentLength = content.Headers.ContentLength.GetValueOrDefault();
@@ -54,24 +49,112 @@ public class NetworkClient : HttpClient
         double bytesPerSecond = 0;
         long currentBytes = 0;
 
-        System.Timers.Timer timer = new(1000) { Enabled = true, AutoReset = true };
-        timer.Elapsed += (s, e) =>
+        System.Timers.Timer dataPerSecondTimer = new(1000) { Enabled = true, AutoReset = true };
+        System.Timers.Timer updateProgressTimer = new(100) { Enabled = true, AutoReset = true };
+        dataPerSecondTimer.Elapsed += (s, e) =>
         {
             bytesPerSecond = totalBytesRead - currentBytes;
             currentBytes = totalBytesRead;
         };
-        timer.Start();
+
+        updateProgressTimer.Elapsed += (s, e) =>
+        {
+            progress?.Invoke(this, new DownloadProgressEventArgs(Path.GetFileName(file), (double)totalBytesRead / contentLength, totalBytesRead, contentLength, bytesPerSecond));
+        };
+        dataPerSecondTimer.Start();
+        updateProgressTimer.Start();
         using (FileStream fs = new(file, FileMode.Create, FileAccess.ReadWrite, FileShare.Read))
         {
             while ((bytesRead = await contentStream.ReadAsync(buffer)) > 0)
             {
                 await fs.WriteAsync(buffer.AsMemory(0, bytesRead));
                 totalBytesRead += bytesRead;
-                progress?.Invoke(this, new DownloadProgressEventArgs(Path.GetFileName(file), (double)totalBytesRead / contentLength, totalBytesRead, contentLength, bytesPerSecond));
             }
         }
-        timer.Stop();
+        dataPerSecondTimer.Stop();
+        updateProgressTimer.Stop();
+        progress?.Invoke(this, new DownloadProgressEventArgs(Path.GetFileName(file), (double)totalBytesRead / contentLength, totalBytesRead, contentLength, bytesPerSecond));
         return file;
+    }
+
+    /// <summary>
+    /// Uploads a file using an address and input file
+    /// </summary>
+    /// <param name="address"></param>
+    /// <param name="file"></param>
+    /// <param name="progress"></param>
+    /// <returns></returns>
+    public async Task<HttpResponseMessage> UploadFileAsync(string address, string file, DownloadProgressEvent? progress = null)
+    {
+        using FileStream fs = File.OpenRead(file); // Opens the file for reading
+        using StreamContent content = new(fs); // Creates a new StreamContent object with the file stream
+
+        // Sets the content headers
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+        content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
+        {
+            FileName = Path.GetFileName(file)
+        };
+
+        // Gets the total bytes of the file
+        long totalBytes = new FileInfo(file).Length;
+
+        // Variables for tracking progress
+        long currentBytes = 0;
+        double bytesPerSecond = 0;
+        byte[] buffer = new byte[8192];
+        int bytesRead;
+
+        // Sets the content length header
+        content.Headers.ContentLength = totalBytes;
+
+        // Creates a new request message with the content
+        using HttpRequestMessage request = new(HttpMethod.Post, address)
+        {
+            Content = content
+        };
+
+        // Sends the request and gets the response
+        using HttpResponseMessage response = await SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+
+        // Gets the response stream
+        using Stream stream = await response.Content.ReadAsStreamAsync();
+
+        // Creates timers for tracking progress
+        System.Timers.Timer dataPerSecondTimer = new(1000) { Enabled = true, AutoReset = true };
+        System.Timers.Timer updateProgressTimer = new(100) { Enabled = true, AutoReset = true };
+
+        dataPerSecondTimer.Elapsed += (s, e) =>
+        {
+            // Calculates the bytes per second
+            bytesPerSecond = totalBytes - currentBytes;
+            currentBytes = totalBytes;
+        };
+
+        updateProgressTimer.Elapsed += (s, e) =>
+        {
+            // Updates the progress
+            progress?.Invoke(this, new DownloadProgressEventArgs(Path.GetFileName(file), (double)currentBytes / totalBytes, currentBytes, totalBytes, bytesPerSecond));
+        };
+
+        // Starts the timers
+        dataPerSecondTimer.Start();
+        updateProgressTimer.Start();
+
+        // Reads the response stream
+        while ((bytesRead = await stream.ReadAsync(buffer)) > 0)
+        {
+            currentBytes += bytesRead;
+        }
+
+        // Stops the timers
+        dataPerSecondTimer.Stop();
+        updateProgressTimer.Stop();
+
+        // Updates the progress one last time
+        progress?.Invoke(this, new DownloadProgressEventArgs(Path.GetFileName(file), (double)currentBytes / totalBytes, currentBytes, totalBytes, bytesPerSecond));
+
+        return response;
     }
 
     /// <summary>
@@ -133,5 +216,14 @@ public class NetworkClient : HttpClient
         }
 
         return null;
+    }
+
+    private string GetValidFileName(string original)
+    {
+        foreach (char c in Path.GetInvalidFileNameChars())
+        {
+            original = original.Replace(c.ToString(), "");
+        }
+        return original;
     }
 }
